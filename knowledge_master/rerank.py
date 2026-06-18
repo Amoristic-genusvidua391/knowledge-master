@@ -5,9 +5,7 @@ cosine similarity of concatenated query+document vs query alone.
 This is a lightweight approximation of cross-encoder re-ranking.
 """
 
-import ollama
-
-MODEL = "nomic-embed-text"
+from .embeddings import _client, MODEL
 
 
 def rerank(query: str, results: list[dict], top_k: int = 5) -> list[dict]:
@@ -30,7 +28,7 @@ def rerank(query: str, results: list[dict], top_k: int = 5) -> list[dict]:
     query_ref = f"search_query: {query}\nsearch_document: {query}"
     all_texts = [query_ref] + pairs
 
-    response = ollama.embed(model=MODEL, input=all_texts)
+    response = _client.embed(model=MODEL, input=all_texts)
     vectors = response["embeddings"]
 
     query_vec = vectors[0]
