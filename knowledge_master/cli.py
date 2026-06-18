@@ -134,62 +134,135 @@ def search(
 
 @app.command()
 def blast_radius(
-    target: str = typer.Argument(..., help="Service, file, or tech name to check"),
-    depth: int = typer.Option(3, "--depth", "-d", help="Traversal depth"),
+    target: str = typer.Argument(..., help="Service, file, function, or tech name"),
+    depth: int = typer.Option(4, "--depth", "-d", help="Traversal depth"),
 ):
-    """Show what depends on a target — the blast radius of changing it."""
+    """Show what depends on a target — multi-layer blast radius analysis."""
     graph = store.get_graph()
+    results = _compute_blast_radius(graph, target, depth)
 
-    # Try as Service first
-    result = graph.query(
-        """MATCH (target:Service {name: $name})
-           OPTIONAL MATCH path = (other)-[*1..3]->(target)
-           WHERE other <> target
-           RETURN labels(other)[0] AS type, other.name AS name,
-                  length(path) AS distance, type(last(relationships(path))) AS rel
-           ORDER BY distance""",
-        params={"name": target},
-    )
-
-    if not result.result_set:
-        # Try as Tech
-        result = graph.query(
-            """MATCH (target:Tech {name: $name})
-               OPTIONAL MATCH (r:Repo)-[:USES_TECH]->(target)
-               RETURN 'Repo' AS type, r.name AS name, 1 AS distance, 'USES_TECH' AS rel""",
-            params={"name": target},
-        )
-
-    if not result.result_set:
-        # Try as file/document
-        result = graph.query(
-            """MATCH (target:Document) WHERE target.path CONTAINS $name
-               OPTIONAL MATCH (c:Chunk)-[:PART_OF]->(target)
-               OPTIONAL MATCH (p:Person)-[:AUTHORED]->(target)
-               OPTIONAL MATCH (target)-[:IN_REPO]->(r:Repo)
-               RETURN 'Repo' AS type, r.name AS name, 1 AS distance, 'CONTAINS' AS rel
-               UNION
-               MATCH (target:Document) WHERE target.path CONTAINS $name
-               OPTIONAL MATCH (p:Person)-[:AUTHORED]->(target)
-               RETURN 'Person' AS type, p.name AS name, 1 AS distance, 'AUTHORED' AS rel""",
-            params={"name": target},
-        )
-
-    if not result.result_set or all(r[1] is None for r in result.result_set):
+    if not results:
         console.print(f"[yellow]No dependencies found for:[/] {target}")
-        console.print("[dim]Try: a service name, technology, or file path[/]")
+        console.print("[dim]Try: a file path, function name, service, or technology[/]")
         return
 
     tree = Tree(f"[bold red]💥 Blast radius: {target}[/]")
-    seen = set()
-    for node_type, name, distance, rel in result.result_set:
-        if name and name not in seen:
-            seen.add(name)
-            icon = {"Repo": "📦", "Service": "⚙️", "Person": "👤", "Document": "📄", "Tech": "🔧"}.get(node_type, "•")
-            tree.add(f"{icon} [bold]{name}[/] [dim]({node_type}, via {rel})[/]")
+
+    # Group by confidence
+    definite = [r for r in results if r["confidence"] == "definite"]
+    likely = [r for r in results if r["confidence"] == "likely"]
+    possible = [r for r in results if r["confidence"] == "possible"]
+
+    if definite:
+        branch = tree.add("[bold]Definite impact[/]")
+        for r in definite:
+            icon = _icon(r["type"])
+            branch.add(f"{icon} [bold]{r['name']}[/] [dim]({r['type']}, {r['rel']})[/]")
+
+    if likely:
+        branch = tree.add("[yellow]Likely affected[/]")
+        for r in likely:
+            icon = _icon(r["type"])
+            branch.add(f"{icon} {r['name']} [dim]({r['type']}, {r['rel']})[/]")
+
+    if possible:
+        branch = tree.add("[dim]Possibly affected[/]")
+        for r in possible:
+            icon = _icon(r["type"])
+            branch.add(f"{icon} {r['name']} [dim]({r['type']}, {r['rel']})[/]")
 
     console.print(tree)
-    console.print(f"\n[dim]{len(seen)} entities affected[/]")
+    console.print(f"\n[dim]{len(results)} entities: {len(definite)} definite, {len(likely)} likely, {len(possible)} possible[/]")
+
+
+def _compute_blast_radius(graph, target: str, depth: int = 4) -> list[dict]:
+    """Multi-layer blast radius: Symbol → File → Service → Person."""
+    results = []
+    seen = set()
+
+    # Layer 1: File-level imports (who imports this file?)
+    r = graph.query(
+        """MATCH (src:Document)-[:IMPORTS]->(dst:Document)
+           WHERE dst.path CONTAINS $name
+           RETURN 'Document' AS type, src.path AS name, 'IMPORTS' AS rel""",
+        params={"name": target},
+    )
+    for row in (r.result_set or []):
+        if row[1] and row[1] not in seen:
+            seen.add(row[1])
+            results.append({"type": row[0], "name": row[1], "rel": row[2], "confidence": "definite"})
+
+    # Layer 1b: Symbol-level (who defines/uses this function?)
+    r = graph.query(
+        """MATCH (f:Function {name: $name})-[:DEFINED_IN]->(d:Document)
+           OPTIONAL MATCH (importer:Document)-[:IMPORTS]->(d)
+           RETURN 'Document' AS type, importer.path AS name, 'IMPORTS function' AS rel""",
+        params={"name": target},
+    )
+    for row in (r.result_set or []):
+        if row[1] and row[1] not in seen:
+            seen.add(row[1])
+            results.append({"type": row[0], "name": row[1], "rel": row[2], "confidence": "definite"})
+
+    # Layer 2: Service-level (which service owns affected files?)
+    affected_files = [r["name"] for r in results if r["type"] == "Document"]
+    affected_files.append(target)  # include the target itself
+
+    r = graph.query(
+        """MATCH (d:Document)-[:IN_REPO]->(repo:Repo)-[:DEFINES_SERVICE]->(svc:Service)
+           WHERE any(f IN $files WHERE d.path CONTAINS f)
+           RETURN 'Service' AS type, svc.name AS name, 'owns affected file' AS rel""",
+        params={"files": affected_files},
+    )
+    for row in (r.result_set or []):
+        if row[1] and row[1] not in seen:
+            seen.add(row[1])
+            results.append({"type": row[0], "name": row[1], "rel": row[2], "confidence": "likely"})
+
+    # Layer 2b: Services that depend on affected services
+    affected_services = [r["name"] for r in results if r["type"] == "Service"]
+    if affected_services:
+        r = graph.query(
+            """MATCH (upstream:Service)-[:DEPENDS_ON]->(downstream:Service)
+               WHERE downstream.name IN $services
+               RETURN 'Service' AS type, upstream.name AS name, 'DEPENDS_ON' AS rel""",
+            params={"services": affected_services},
+        )
+        for row in (r.result_set or []):
+            if row[1] and row[1] not in seen:
+                seen.add(row[1])
+                results.append({"type": row[0], "name": row[1], "rel": row[2], "confidence": "likely"})
+
+    # Layer 3: Tech-level
+    r = graph.query(
+        """MATCH (t:Tech {name: $name})
+           OPTIONAL MATCH (repo:Repo)-[:USES_TECH]->(t)
+           RETURN 'Repo' AS type, repo.name AS name, 'USES_TECH' AS rel""",
+        params={"name": target},
+    )
+    for row in (r.result_set or []):
+        if row[1] and row[1] not in seen:
+            seen.add(row[1])
+            results.append({"type": row[0], "name": row[1], "rel": row[2], "confidence": "possible"})
+
+    # Layer 4: People (who authored affected files?)
+    r = graph.query(
+        """MATCH (p:Person)-[:AUTHORED]->(d:Document)
+           WHERE any(f IN $files WHERE d.path = f)
+           RETURN 'Person' AS type, p.name AS name, 'AUTHORED affected file' AS rel""",
+        params={"files": affected_files},
+    )
+    for row in (r.result_set or []):
+        if row[1] and row[1] not in seen:
+            seen.add(row[1])
+            results.append({"type": row[0], "name": row[1], "rel": row[2], "confidence": "possible"})
+
+    return results
+
+
+def _icon(node_type: str) -> str:
+    return {"Repo": "📦", "Service": "⚙️", "Person": "👤", "Document": "📄",
+            "Tech": "🔧", "Function": "🔧", "Class": "🏗️"}.get(node_type, "•")
 
 
 @app.command()
