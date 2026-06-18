@@ -53,7 +53,10 @@ jobs:
           python-version: "3.12"
 
       - name: Install Ollama
-        run: curl -fsSL https://ollama.com/install.sh | sh
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama serve &
+          sleep 5
 
       - name: Pull embedding model
         run: ollama pull nomic-embed-text
