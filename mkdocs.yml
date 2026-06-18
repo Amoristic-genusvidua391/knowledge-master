@@ -1,0 +1,45 @@
+site_name: Knowledge Master
+site_description: Local-first knowledge graph for developers. Your AI agent's permanent memory.
+site_url: https://subzone.github.io/knowledge-master
+repo_url: https://github.com/subzone/knowledge-master
+repo_name: subzone/knowledge-master
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: blue
+    accent: green
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - First Index: getting-started/first-index.md
+  - Guides:
+    - Search & Re-ranking: guides/search.md
+    - Blast Radius: guides/blast-radius.md
+    - Conventions: guides/conventions.md
+    - MCP Integration: guides/mcp-integration.md
+    - Email & Slack: guides/connectors.md
+  - Reference:
+    - CLI Commands: reference/cli.md
+    - REST API: reference/api.md
+    - Performance: reference/performance.md
+    - Security: reference/security.md
+  - Integrations:
+    - Claude Desktop: integrations/claude-desktop.md
+    - Cursor: integrations/cursor.md
+    - Kiro: integrations/kiro.md
+    - Docker: integrations/docker.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - tables
