@@ -46,6 +46,8 @@ def index_repo(repo_path: str, graph=None, branch: str = "HEAD", on_progress=Non
     tracked = repo.git.ls_files().splitlines()
     indexable = [f for f in tracked if _should_index(f)]
     total = len(indexable)
+    indexed_files = []
+    failed_files = []
 
     with Progress(disable=not sys.stdout.isatty()) as progress:
         task = progress.add_task(f"Indexing {repo_name}", total=total)
@@ -53,11 +55,18 @@ def index_repo(repo_path: str, graph=None, branch: str = "HEAD", on_progress=Non
             full_path = os.path.join(repo_path, filepath)
             try:
                 _index_file(graph, full_path, filepath, repo_name, repo)
+                indexed_files.append(filepath)
             except Exception as e:
+                failed_files.append((filepath, str(e)))
                 progress.console.print(f"  [yellow]skip {filepath}: {e}[/]")
             progress.advance(task)
             if on_progress:
                 on_progress(i + 1, total, filepath)
+
+    # If more than 50% failed, warn (possible systemic issue)
+    if total > 0 and len(failed_files) > total * 0.5:
+        import sys as _sys
+        print(f"WARNING: {len(failed_files)}/{total} files failed. Possible systemic issue.", file=_sys.stderr)
 
     # Run intelligence extraction
     intel = extract_all(repo_path, graph)
@@ -65,7 +74,7 @@ def index_repo(repo_path: str, graph=None, branch: str = "HEAD", on_progress=Non
     # Run static analysis (import graph, symbols) — all languages
     static = build_import_graph_all(repo_path, graph)
 
-    return {"repo": repo_name, "files_indexed": total, "intelligence": intel, "static_analysis": static}
+    return {"repo": repo_name, "files_indexed": len(indexed_files), "files_failed": len(failed_files), "intelligence": intel, "static_analysis": static}
 
 
 def _should_index(filepath: str) -> bool:

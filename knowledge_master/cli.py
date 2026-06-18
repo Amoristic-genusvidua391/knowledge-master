@@ -460,5 +460,75 @@ def who_owns(file: str = typer.Argument(..., help="File path to check ownership"
         console.print("[dim]Run 'km index <repo>' first to extract ownership.[/]")
 
 
+@app.command()
+def upgrade():
+    """Upgrade graph schema to the latest version."""
+    from .migrations import check_and_migrate, get_schema_version, CURRENT_SCHEMA_VERSION
+
+    graph = store.get_graph()
+    current = get_schema_version(graph)
+    console.print(f"[bold]Current schema:[/] v{current}")
+    console.print(f"[bold]Target schema:[/]  v{CURRENT_SCHEMA_VERSION}")
+
+    if current == CURRENT_SCHEMA_VERSION:
+        console.print("[green]✓ Already up to date[/]")
+        return
+
+    result = check_and_migrate(graph, auto_migrate=True)
+    for step in result["steps"]:
+        console.print(f"  [green]✓[/] {step}")
+    console.print(f"\n[green]✓ Upgraded to v{CURRENT_SCHEMA_VERSION}[/]")
+
+
+@app.command()
+def prune(
+    older_than: int = typer.Option(30, help="Remove chunks not re-indexed in this many days"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be removed"),
+):
+    """Remove stale/orphaned data from the knowledge graph."""
+    graph = store.get_graph()
+
+    # Find orphaned chunks (no PART_OF edge)
+    orphaned = graph.query("MATCH (c:Chunk) WHERE NOT (c)-[:PART_OF]->() RETURN count(c)")
+    orphan_count = orphaned.result_set[0][0] if orphaned.result_set else 0
+
+    # Find documents with no chunks
+    empty_docs = graph.query(
+        "MATCH (d:Document) WHERE NOT ()-[:PART_OF]->(d) AND NOT (d)-[:IN_REPO]->() RETURN count(d)"
+    )
+    empty_count = empty_docs.result_set[0][0] if empty_docs.result_set else 0
+
+    # Find stale chunks (indexed_at older than threshold)
+    # FalkorDB timestamp() returns ms since epoch
+    threshold_ms = older_than * 86400 * 1000
+    stale = graph.query(
+        """MATCH (c:Chunk)
+           WHERE c.indexed_at IS NOT NULL AND (timestamp() - c.indexed_at) > $threshold
+           RETURN count(c)""",
+        params={"threshold": threshold_ms},
+    )
+    stale_count = stale.result_set[0][0] if stale.result_set else 0
+
+    console.print("[bold]Prune analysis:[/]")
+    console.print(f"  Orphaned chunks (no document link): {orphan_count}")
+    console.print(f"  Empty documents (no chunks):        {empty_count}")
+    console.print(f"  Stale chunks (>{older_than} days):        {stale_count}")
+
+    if dry_run:
+        console.print("\n[yellow]Dry run — nothing removed.[/]")
+        return
+
+    total = 0
+    if orphan_count > 0:
+        graph.query("MATCH (c:Chunk) WHERE NOT (c)-[:PART_OF]->() DELETE c")
+        total += orphan_count
+
+    if empty_count > 0:
+        graph.query("MATCH (d:Document) WHERE NOT ()-[:PART_OF]->(d) AND NOT (d)-[:IN_REPO]->() DELETE d")
+        total += empty_count
+
+    console.print(f"\n[green]✓ Removed {total} stale nodes[/]")
+
+
 if __name__ == "__main__":
     app()

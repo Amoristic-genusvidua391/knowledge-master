@@ -1,5 +1,7 @@
 """FalkorDB graph store - nodes, edges, vector search, and graph traversal."""
 
+import hashlib
+
 from falkordb import FalkorDB
 
 GRAPH_NAME = "knowledge"
@@ -7,11 +9,35 @@ GRAPH_NAME = "knowledge"
 # Vector dimension for nomic-embed-text
 VECTOR_DIM = 768
 
+_graph_instance = None
+
 
 def get_graph(host: str = "localhost", port: int = 6379):
-    """Get FalkorDB graph instance."""
+    """Get FalkorDB graph instance with schema version check."""
+    global _graph_instance
+    if _graph_instance is not None:
+        return _graph_instance
+
     db = FalkorDB(host=host, port=port)
-    return db.select_graph(GRAPH_NAME)
+    graph = db.select_graph(GRAPH_NAME)
+
+    # Check and auto-migrate schema
+    from .migrations import check_and_migrate
+    check_and_migrate(graph, auto_migrate=True)
+
+    _graph_instance = graph
+    return graph
+
+
+def reset_graph_instance():
+    """Reset cached graph instance (for testing)."""
+    global _graph_instance
+    _graph_instance = None
+
+
+def content_hash(text: str) -> str:
+    """Compute content hash for deduplication."""
+    return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
 def init_schema(graph):
@@ -35,20 +61,32 @@ def init_schema(graph):
 
 
 def upsert_chunk(graph, chunk_id: str, text: str, embedding: list[float], metadata: dict):
-    """Insert or update a chunk node with embedding."""
+    """Insert or update a chunk node with embedding. Skips if content unchanged (dedup)."""
+    chash = content_hash(text)
+
+    # Check if chunk exists with same content hash — skip if unchanged
+    existing = graph.query(
+        "MATCH (c:Chunk {id: $id}) RETURN c.content_hash",
+        params={"id": chunk_id},
+    )
+    if existing.result_set and existing.result_set[0][0] == chash:
+        return False  # skip — content unchanged
+
     graph.query(
         """MERGE (c:Chunk {id: $id})
            SET c.text = $text, c.embedding = vecf32($embedding),
                c.source = $source, c.source_type = $source_type,
-               c.indexed_at = timestamp()""",
+               c.content_hash = $hash, c.indexed_at = timestamp()""",
         params={
             "id": chunk_id,
             "text": text,
             "embedding": embedding,
             "source": metadata.get("source", ""),
             "source_type": metadata.get("source_type", ""),
+            "hash": chash,
         },
     )
+    return True  # inserted/updated
 
 
 def upsert_document(graph, path: str, doc_type: str, metadata: dict):
