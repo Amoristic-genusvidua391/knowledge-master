@@ -176,9 +176,11 @@ Your AI agent gets these tools:
 | `km start` | Boot Docker containers + pull embedding model |
 | `km stop` | Stop containers |
 | `km index <path>` | Index a git repo or docs directory |
-| `km search <query>` | Semantic search with graph context |
-| `km blast-radius <target>` | Show dependencies and affected entities |
+| `km search <query>` | Semantic search with re-ranking |
+| `km blast-radius <target>` | Multi-layer dependency analysis (imports → services → people) |
+| `km who-owns <file>` | File ownership from git blame (weighted by recency) |
 | `km check-conventions <path>` | Verify code follows detected patterns |
+| `km connect <source>` | Pull from external MCP (email, Slack) |
 | `km list` | Show indexed repos, techs, stats |
 | `km remove <name>` | Remove a source from the knowledge base |
 | `km serve` | Start web UI at http://127.0.0.1:9999 |
