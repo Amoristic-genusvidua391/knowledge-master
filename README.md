@@ -22,11 +22,19 @@ Unlike flat RAG tools that return "chunks about X", Knowledge Master builds a **
 - 🖥️ **Web UI** — search, browse, visualize your knowledge graph
 - 🔒 **Local-first** — nothing leaves your machine
 
+## Prerequisites
+
+| Dependency | macOS | Ubuntu/Debian | Windows |
+|---|---|---|---|
+| **Docker** | `brew install colima && colima start` or Docker Desktop | `sudo apt install docker.io docker-compose-plugin` | [Docker Desktop](https://docker.com/products/docker-desktop/) |
+| **Ollama** | `brew install ollama && ollama serve` | `curl -fsSL https://ollama.com/install.sh \| sh` | [Ollama installer](https://ollama.com/download) |
+| **Python 3.11+** | `brew install python@3.12` | `sudo apt install python3.12 python3.12-venv` | [python.org](https://python.org/downloads/) |
+
 ## Quick Start
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/knowledge-master.git
+git clone https://github.com/subzone/knowledge-master.git
 cd knowledge-master
 
 # One command setup
@@ -205,6 +213,17 @@ ruff check src/
 # Run MCP server directly
 python -m src.server
 ```
+
+## Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| `km start` fails with "Docker not running" | Start Docker: `colima start` (macOS) or `sudo systemctl start docker` (Linux) |
+| `km start` fails with "Ollama not found" | Install Ollama from https://ollama.com and run `ollama serve` |
+| `km index` is slow | First run downloads the embedding model (~274MB). Subsequent runs are fast. |
+| Web UI shows "Connection refused" | Make sure containers are running: `km start` |
+| Search returns poor results | Index more content. Quality improves with more context in the graph. |
+| Port 9999 already in use | Use `km serve --port 8888` |
 
 ## License
 
