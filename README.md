@@ -3,10 +3,8 @@
 **Your codebase's memory.** A local knowledge graph that gives AI agents real understanding of your architecture — not just text search.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Status: Alpha](https://img.shields.io/badge/Status-Alpha-orange)
+![Status: Stable](https://img.shields.io/badge/Status-Stable-green)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue)
-
-> ⚠️ **Alpha software.** Core features work (search, graph, CLI, MCP server) but some capabilities are early-stage. See [Feature Status](#feature-status) below.
 
 ---
 
@@ -173,16 +171,22 @@ Your AI agent gets these tools:
 
 | Command | Description |
 |---|---|
-| `km start` | Boot Docker containers + pull embedding model |
+| `km start` | Boot Docker + pull embedding model |
 | `km stop` | Stop containers |
 | `km index <path>` | Index a git repo or docs directory |
 | `km search <query>` | Semantic search with re-ranking |
-| `km blast-radius <target>` | Multi-layer dependency analysis (imports → services → people) |
-| `km who-owns <file>` | File ownership from git blame (weighted by recency) |
+| `km blast-radius <target>` | Multi-layer dependency analysis |
+| `km safe-to-change <target>` | Risk assessment (safe/risky/dangerous) |
+| `km who-owns <file>` | File ownership (git blame, recency-weighted) |
 | `km check-conventions <path>` | Verify code follows detected patterns |
 | `km connect <source>` | Pull from external MCP (email, Slack) |
+| `km setup <tool>` | Auto-configure MCP for AI tools |
+| `km watch <path>` | File watcher with auto re-index |
+| `km upgrade` | Migrate graph schema |
+| `km prune` | Remove stale/orphaned data |
+| `km changelog` | Generate CHANGELOG.md |
 | `km list` | Show indexed repos, techs, stats |
-| `km remove <name>` | Remove a source from the knowledge base |
+| `km remove <name>` | Remove a source |
 | `km serve` | Start web UI at http://127.0.0.1:9999 |
 | `km status` | Check system health |
 
