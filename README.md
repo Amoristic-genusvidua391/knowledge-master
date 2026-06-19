@@ -36,8 +36,11 @@ Unlike flat RAG tools that return "chunks about X", Knowledge Master builds a **
 
 ```bash
 # Install (pick one)
-pip install knowledge-master          # from PyPI
-pipx install knowledge-master         # isolated install (recommended)
+pipx install knowledge-master         # recommended (isolated, clean)
+pip install knowledge-master           # or with pip
+
+# Or via Homebrew (macOS)
+brew install pipx && pipx install knowledge-master
 
 # Or from source
 git clone https://github.com/subzone/knowledge-master.git
